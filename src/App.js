@@ -1,205 +1,232 @@
+// src/App.js
 
-import Map from './components/Map';
-import Graphs from './components/Graphs';
-import Console from './components/Console';
-import React, { useState, useEffect } from 'react';
-import Controls from './components/Controls';
-import Telemetry from './components/Telemetry';
-import Timeline from './components/Timeline';
-import { Serialport } from 'tauri-plugin-serialport-api';
-//import { useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { invoke } from '@tauri-apps/api/tauri'
-//import { useEffect } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import Map from "./components/Map";
+import Graphs from "./components/Graphs";
+import Console from "./components/Console";
+import React, { useState, useEffect } from "react";
+import Controls from "./components/Controls";
+import Telemetry from "./components/Telemetry";
+import Timeline from "./components/Timeline";
+import Database from "./components/database";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import {
+  createSerialPort,
+  openSerialport,
+  writeSerialport,
+  readSerialport,
+  listenSerialport,
+  cancelReadSerialport,
+} from "./services/serialport_services";
 
 function App() {
-  const [connectionState, setConnectionState] = useState('btn-warning');
-  const [packets, setPackets] = useState([])
-  const [serialport] = useState(() => new Serialport({ path: 'COM7', baudRate: 115200 }))
-  const [information, setInformation] = useState('READY');
+  // State variables
+  const [COMPort, setCOMPort] = useState("COM3");
+  const [connectionState, setConnectionState] = useState("btn-warning");
+  const [packets, setPackets] = useState([]);
+  const [serialport, setSerialport] = useState(() => createSerialPort(COMPort));
+  const [information, setInformation] = useState("right");
   const [yearArray, setYearArray] = useState([]);
   const [monthsArray, setMonthsArray] = useState([]);
   const [daysArray, setDaysArray] = useState([]);
+  const [fixqualityArray, setfixqualityArray] = useState([]);
+  const [satellitesArray, setsatellitesArray] = useState([]);
+  const [weekdaysArray, setweekdaysArray] = useState([]);
+  const [timesArray, settimesArray] = useState([]);
+  const [Accel_xArray, setAccel_xArray] = useState([]);
+  const [Accel_yArray, setAccel_yArray] = useState([]);
+  const [Accel_ZArray, setAccel_ZArray] = useState([]);
+  const [gxArray, setgxArray] = useState([]);
+  const [gyArray, setgyArray] = useState([]);
+  const [gzArray, setgzArray] = useState([]);
+  const [Temperature_CArray, setTemperature_CArray] = useState([]);
+  const [TemperatureArray, setTemperatureArray] = useState([]);
+  const [PressuresArray, setPressuresArray] = useState([]);
+  const [AltitudesArray, setAltitudesArray] = useState([]);
+  const [HumidityArray, setHumidityArray] = useState([]);
+  const [fixsArray, setfixsArray] = useState([]);
+  const [latitudesArray, setlatitudesArray] = useState([]);
+  const [longitudesArray, setlongitudesArray] = useState([]);
+  const [speedArray, setspeedArray] = useState([]);
+  const [altitudes_gpsArray, setaltitudes_gpsArray] = useState([]);
+  const [currentIndex, setcurrentIndex] = useState(0);
+  const [rssiArray, setrssiArray] = useState([]);
+  const [snrArray, setsnrArray] = useState([]);
+  const [filepath, setfilepath] = useState();
+  const [live, setliveData] = useState(true);
 
+  // Effect to update packets
+  useEffect(() => {}, [packets]);
 
-  //let columnNames = ["years", "months", "days"];
-  let columnNames = ["years"];
+  // Effect to update serial port when COMPort changes
   useEffect(() => {
-    
-  }, [packets])
-  
-console.log("test");
+    const newSerialPort = createSerialPort(COMPort);
+    setSerialport(newSerialPort);
+  }, [COMPort]);
 
-  function openSerialport() {
-    serialport
-      .open()
-      .then((res) => read())
-      .catch((err) => {
-        setConnectionState('btn-error')
-        toast.error('Serial port not found.', {
-          position: "bottom-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "dark",
-        });
-        console.error(err);
-      });
+  // Function to parse packet data
+  function parsePack(
+    pack1,
+    pack2,
+    pack3,
+    pack4,
+    pack5,
+    pack6,
+    pack7,
+    pack8,
+    pack9,
+    pack10,
+    pack11,
+    pack12,
+    pack13,
+    pack14,
+    pack15,
+    pack16,
+    pack17,
+    pack18,
+  ) {
+    parseMessage(pack1);
+    setAccel_yArray((prevAccely) => [...prevAccely, pack2]);
+    setAccel_ZArray((prevAccelz) => [...prevAccelz, pack3]);
+    setgxArray((prevgxs) => [...prevgxs, pack4]);
+    setgyArray((prevgys) => [...prevgys, pack5]);
+    setgzArray((prevgzs) => [...prevgzs, pack6]);
+    setTemperature_CArray((prevTempC) => [...prevTempC, pack7]);
+    setTemperatureArray((prevTemp) => [...prevTemp, pack8]);
+    setPressuresArray((prevTPressure) => [...prevTPressure, pack9]);
+    setAltitudesArray((prevAltitudesArray) => [...prevAltitudesArray, pack10]);
+    setHumidityArray((prevHumidity) => [...prevHumidity, pack11]);
+    setfixsArray((prevfixs) => [...prevfixs, pack12]);
+    setfixqualityArray((prevfixqlt) => [...prevfixqlt, pack13]);
+    setlatitudesArray((prevlat) => [...prevlat, pack14]);
+    setlongitudesArray((prevlon) => [...prevlon, pack15]);
+    setspeedArray((prevsp) => [...prevsp, pack16]);
+    setaltitudes_gpsArray((prevalt) => [...prevalt, pack17]);
+    setsatellitesArray((prevsat) => [...prevsat, pack18]);
   }
 
-  function write() {
-    serialport
-      .write('t')
-      .then((res) => {
-        console.log('write serialport: ', res);
-      })
-      .catch((err) => {
-        setConnectionState('btn-error')
-        console.error(err);
-      });
-  }
+  // Function to parse message string
+  function parseMessage(inputString) {
+    const pattern =
+      /Message: \[(\d{4})\/(\d{1,2})\/(\d{1,2}) \((\w+)\) (\d{2}:\d{2}:\d{2})\] (-?\d+\.\d+)/;
+    const match = inputString.match(pattern);
 
-  function read() {
-    serialport
-      .read({ timeout: 1 })
-      .then((res) => listen())
-      .catch((err) => {
-        setConnectionState('btn-error')
-        console.error(err);
-      });
-  }
-  function listen() {
-    serialport
-      .listen((data) => {
-        invoke('create_file', { data: data })
-       
-        data = data.split("\r\n")
-        data.pop()
-        data.shift()
-        data = data.map(raw_packet => raw_packet.split(","))
-      }, false)
-      .then((res) => {
-        setConnectionState('btn-success btn-disabled')
-        console.log('listen serialport: ', res);
-      })
-      .catch((err) => {
-        setConnectionState('btn-error')
-        console.error(err);
-      });
-  }
-  function cancelRead() {
-    serialport
-      .cancelRead()
-      .then((res) => {
-        console.log('cancel read: ', res);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-   }
-  
-  async function readData (name){
-    try{ 
-      const tableData = await invoke('load_database', {column: name})
-      if (name === "years") {
-        await setYearArray(tableData);
-        setInformation('function works: '+ name + ' ' + yearArray[0]);
-      } 
-      //if (name === "years") {
-      //}
-     
-    } catch (error) {
-      setInformation(error);
+    if (match) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const day = parseInt(match[3], 10);
+      const weekday = match[4];
+      const time = match[5];
+      const decimalValue = parseFloat(match[6]);
+      setYearArray((prevYear) => [...prevYear, year]);
+      setMonthsArray((prevMonth) => [...prevMonth, month]);
+      setDaysArray((prevDay) => [...prevDay, day]);
+      setweekdaysArray((prevWeekday) => [...prevWeekday, weekday]);
+      setAccel_xArray((prevAccelx) => [...prevAccelx, decimalValue]);
+      settimesArray((prevtimes) => [...prevtimes, time]);
     }
-    //try{
-      //if (name === "years") {
-      //  setInformation('function works: '+ name + ' ' + yearArray[0]);
-      //}
-    //} catch (error) {
-    //  setInformation(error);
-    //}
+  }
 
-    //setInformation(information === 'right' ? 'wrong' : 'right');
-   }
+  // Handlers for serial port operations
+  function openSerialportHandler() {
+    openSerialport(serialport, setConnectionState, readSerialportHandler);
+  }
 
-   function readAllData(){
-    columnNames.forEach(name => readData(name));
-   };
-  return (
-    <div className='h-screen w-screen flex flex-col'>
+  function writeSerialportHandler() {
+    writeSerialport(serialport, setConnectionState);
+  }
 
-      <div className='flex w-full flex-1 p-2'>
+  function readSerialportHandler() {
+    readSerialport(serialport, setConnectionState, listenSerialportHandler);
+  }
 
-        <div className='flex-1 flex flex-col'>
+  function listenSerialportHandler() {
+    listenSerialport(
+      serialport,
+      setConnectionState,
+      parsePack,
+      setsnrArray,
+      setrssiArray,
+    );
+  }
 
-          <Map></Map>
+  function cancelReadHandler() {
+    cancelReadSerialport(serialport);
+  }
 
-          <Console  information={information}></Console> 
-  
-        </div>
-
-        <div className="divider divider-horizontal"></div>
-
-        <div className='flex flex-col flex-1'>
-
-          <Graphs></Graphs>
-
-          <div className='flex flex-1'>
-
-            <Controls connectionState={connectionState} openSerialport={openSerialport} loadData={readAllData}></Controls>
-
-            <div className="divider divider-horizontal mt-[16px]"></div>
-
-            <Telemetry></Telemetry>
-
+  // Conditional rendering based on live state
+  if (live) {
+    return (
+      <div className="h-screen w-screen flex flex-col">
+        <div className="flex w-full flex-1 p-2">
+          <div className="flex-1 flex flex-col">
+            <Map
+              longitudesArray={longitudesArray}
+              latitudesArray={latitudesArray}
+            ></Map>
+            <Console information={information}></Console>
           </div>
-
+          <div className="divider divider-horizontal"></div>
+          <div className="flex flex-col flex-1">
+            <Graphs
+              setliveData={setliveData}
+              times_data={timesArray}
+              altitudes_data={AltitudesArray}
+              setInformation={setInformation}
+            ></Graphs>
+            <div className="flex flex-1">
+              <Controls
+                connectionState={connectionState}
+                openSerialport={openSerialportHandler}
+                setCOMPort={setCOMPort}
+                COMPort={COMPort}
+                setInformation={setInformation}
+                setfilepath={setfilepath}
+                filepath={filepath}
+                cancelRead={cancelReadHandler}
+              ></Controls>
+              <div className="divider divider-horizontal mt-[16px]"></div>
+              <Telemetry
+                altitudes_array={AltitudesArray}
+                satellites={satellitesArray}
+                rssi={rssiArray}
+                snr={snrArray}
+                pressure={PressuresArray}
+                Accel_ZArray={Accel_ZArray}
+                longitudesArray={longitudesArray}
+                latitudesArray={latitudesArray}
+                gxArray={gxArray}
+                gyArray={gyArray}
+                gzArray={gzArray}
+                Accel_xArray={Accel_xArray}
+                Accel_yArray={Accel_yArray}
+              ></Telemetry>
+            </div>
+          </div>
         </div>
-
+        <Timeline></Timeline>
+        <ToastContainer
+          position="bottom-left"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </div>
-
-      <Timeline></Timeline>
-
-      <ToastContainer
-        position="bottom-left"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-
-    </div>
-  );
+    );
+  } else {
+    return (
+      <Database
+        setInformation={setInformation}
+        setliveData={setliveData}
+      ></Database>
+    );
+  }
 }
-////////////////     4/17/24     //////////////////////////////
-//function CLOCK() {
-//  const [time, setTime] = useState('');
-//  
-//  useEffect(() => {
-//    const updateClock = async () => {
-//      //Listen for messages from Rust
-//      await listen('tauri:updateTime', (event) => {
-//        // Update state with recieved time
-//        setTime(event.payload);
-//      });
-//    };
-//  }, []);
-//
-//  return (
-//    <div>
-//
-////////////////     4/17/24     //////////////////////////////
-  
-   
-    
+
 export default App;
