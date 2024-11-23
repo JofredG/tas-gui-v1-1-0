@@ -39,28 +39,28 @@ declare class Serialport {
     size: number;
     constructor(options: SerialportOptions);
     /**
-     * @description: Get the list of serial ports
+     * @description: 获取串口列表
      * @return {Promise<string[]>}
      */
     static available_ports(): Promise<string[]>;
     /**
-     * @description: Force close
+     * @description: 强制关闭
      * @param {string} path
      * @return {Promise<void>}
      */
     static forceClose(path: string): Promise<void>;
     /**
-     * @description: Close all serial ports
+     * @description: 关闭所有串口
      * @return {Promise<void>}
      */
     static closeAll(): Promise<void>;
     /**
-     * @description: Cancel serial port listening
+     * @description: 取消串口监听
      * @return {Promise<void>}
      */
     cancelListen(): Promise<void>;
     /**
-     * @description: Cancel reading data
+     * @description: 取消读取数据
      * @return {Promise<void>}
      */
     cancelRead(): Promise<void>;
@@ -74,47 +74,47 @@ declare class Serialport {
         baudRate?: number;
     }): Promise<void>;
     /**
-     * @description: Close the serial port
+     * @description: 关闭串口
      * @return {Promise<InvokeResult>}
      */
     close(): Promise<void>;
     /**
-     * @description: Listen to serial port information
+     * @description: 监听串口信息
      * @param {function} fn
      * @return {Promise<void>}
      */
     listen(fn: (...args: any[]) => void, isDecode?: boolean): Promise<void>;
     /**
-     * @description: Open the serial port
+     * @description: 打开串口
      * @return {*}
      */
     open(): Promise<void>;
     /**
-     * @description: Read serial port information
-     * @param {ReadOptions} options Read options { timeout, size }
+     * @description: 读取串口信息
+     * @param {ReadOptions} options 读取选项 { timeout, size }
      * @return {Promise<void>}
      */
     read(options?: ReadOptions): Promise<void>;
     /**
-     * @description: Set the serial port baud rate
+     * @description: 设置串口 波特率
      * @param {number} value
      * @return {Promise<void>}
      */
     setBaudRate(value: number): Promise<void>;
     /**
-     * @description: Set the serial port path
+     * @description: 设置串口 path
      * @param {string} value
      * @return {Promise<void>}
      */
     setPath(value: string): Promise<void>;
     /**
-     * @description: Write data to the serial port
+     * @description: 串口写入数据
      * @param {string} value
      * @return {Promise<number>}
      */
     write(value: string): Promise<number>;
     /**
-     * @description: Write binary data to the serial port
+     * @description: 写入二进制数据到串口
      * @param {Uint8Array} value
      * @return {Promise<number>}
      */
